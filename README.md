@@ -1,2 +1,11 @@
 # cgplot
-comparative genome dot plot viewer
+comparative genome plot
+
+## 
+
+
+
+ 
+
+
+

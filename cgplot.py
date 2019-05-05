@@ -1,10 +1,123 @@
 import argparse, sys,os
+import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from wiggle import Reader 
 
+def get_abspath(p):
+    return os.path.abspath(p)
 
+def cgplot_func2(hits, covs, chrg_t, qrybd):
+    [chrn, xmin, xmax] = chrg_t
+    title = "t1" 
+    title2 = "t2" 
+           
+    height = 10
+    width = 10
+    dpi = 300
+    
+
+    colors = ["#000000", "#ef2928", "#ad7fa8", "#8ae234", "#729fcf", "#f2c27e", "#fcaf3e", "#fce94f"]
+    t = 0
+    color_idx = {}
+    for k in covs:
+        color_idx[k] = t
+        t += 1
+
+    maxcov = 0
+    for k in covs:
+        for z in covs[k]:
+            if z[2] > maxcov:
+                maxcov = z[2]
+    
+    # xmin = 0
+    # xmax = 0
+    # xlabel = []
+    # xpos = []
+    # start = 0
+    # for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        # xmax += q[1] - q[0] 
+        # start -= q[0]
+        # xpos.append(start + q[0])
+        # xlabel.append("{0:.2f}".format(q[0]/1000000))
+        # xpos.append(start + int((q[0] + q[1])/2))
+        # xlabel.append("{}".format(k))
+        # xpos.append(start + q[1] - 1000)
+        # xlabel.append("{0:.2f}".format(q[1]/1000000))
+        # start += q[1] - q[0]
+
+    ymin2 = 0 
+    ymax2 = int ((maxcov + 9) / 10 * 10) 
+    
+
+    fig = plt.figure(num=None, figsize=(width, height)) 
+    
+    rect1 = [0.07, 0.3, 0.90, 0.65]
+    ax1 = fig.add_axes(rect1)
+    ax1.set_ylim(xmin, xmax)
+    ax1.set_xlim(xmin, xmax)
+    # ax1.set_xticks(xpos)
+    # ax1.set_xticklabels(xlabel, fontsize='xx-small')
+    # ax1.tick_params(axis='x', direction='inout')
+    # ax1.set_xticks(xpos[4:6])
+    # ax1.set_xticklabels(xlabel[4:6], fontsize='xx-small')
+    # ax1.tick_params(axis='x', direction='out')
+    # i = 0
+    # for txt in ax1.get_xticklabels():
+        # if int(i / 3) % 2 == 1:
+            # txt.set_y(0.04) 
+        # i += 1
+    # plt.setp(ax1.get_xticklabels(), visible=True)
+    # ax1.set_yticks([])
+    start = xmin 
+    for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        start -= q[0]
+        for t in hits[k]:
+            ax1.plot([t[2], t[3]], [start + t[0], start + t[1]], color=colors[color_idx[k]], label=k)  
+        start += q[1] - q[0]
+    # ax1.set_title(title)
+    ax1.set_xlabel("Contig (Mb)")
+    ax1.set_ylabel("{} (MB)".format(chrn))
+    # zip legend
+    handle, labels = ax1.get_legend_handles_labels()
+    nhandles = []
+    nlabels = []
+    for h, l in zip(handle, labels):
+        if l not in nlabels:
+            nhandles.append(h)
+            nlabels.append(l)
+    ax1.legend(nhandles, nlabels, loc=1)
+     
+    rect2 = [0.07, 0.02, 0.90, 0.23]
+    ax2 = fig.add_axes(rect2 ) 
+    ax2.set_ylim([ymin2, ymax2])
+    ax2.invert_yaxis()
+    ax2.set_xlim([xmin, xmax])
+    ax2.set_xticks([])
+    # start = xmin
+    for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        start = q[2]
+        for t in covs[k]:
+            # print (t)
+            ax2.fill([start + t[0], start + t[1], start + t[1], start + t[0]],[0, 0, t[2], t[2]],facecolor = colors[color_idx[k]], label=k)
+        # start += q[3] - q[2]
+    # for k in covs:
+        # _st = qrybd[k][2]
+    # ax2.set_title("pp")
+    ax2.set_ylabel("read-depth")
+    ax2.legend().set_visible(False)
+    # handle, labels = ax2.get_legend_handles_labels()
+    # nhandles = []
+    # nlabels = []
+    # for h, l in zip(handle, labels):
+        # if l not in nlabels:
+            # nhandles.append(h)
+            # nlabels.append(l)
+    # ax2.legend(nhandles, nlabels, loc=1)
+    # ax2.legend(loc=1)
+    # fig.tight_layout()
+    fig.savefig("test.png", dpi = dpi)
 def cgplot_func(hits, covs, chrg_t, qrybd):
     [chrn, ymin, ymax] = chrg_t
     title = "t1" 
@@ -30,27 +143,50 @@ def cgplot_func(hits, covs, chrg_t, qrybd):
     
     xmin = 0
     xmax = 0
+    xlabel = []
+    xpos = []
+    start = 0
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
-        xmax += q[1] - q[0]  
-    
+        xmax += q[1] - q[0] 
+        start -= q[0]
+        xpos.append(start + q[0])
+        xlabel.append("{0:.2f}".format(q[0]/1000000))
+        xpos.append(start + int((q[0] + q[1])/2))
+        xlabel.append("{}".format(k))
+        xpos.append(start + q[1] - 1000)
+        xlabel.append("{0:.2f}".format(q[1]/1000000))
+        start += q[1] - q[0]
+
     ymin2 = 0 
     ymax2 = int ((maxcov + 9) / 10 * 10) 
     
 
     fig = plt.figure(num=None, figsize=(width, height)) 
     
-    rect1 = [0.05, 0.3, 0.90, 0.65]
+    rect1 = [0.07, 0.3, 0.90, 0.65]
     ax1 = fig.add_axes(rect1)
-    ax1.set_ylim(ymin, ymax)
+    ax1.set_ylim(ymin/1000000, ymax/1000000)
     ax1.set_xlim(xmin, xmax)
+    ax1.set_xticks(xpos)
+    ax1.set_xticklabels(xlabel, fontsize='xx-small')
+    ax1.tick_params(axis='x', direction='inout')
+    # ax1.set_xticks(xpos[4:6])
+    # ax1.set_xticklabels(xlabel[4:6], fontsize='xx-small')
+    # ax1.tick_params(axis='x', direction='out')
+    i = 0
+    for txt in ax1.get_xticklabels():
+        if int(i / 3) % 2 == 1:
+            txt.set_y(0.04) 
+        i += 1
+    # plt.setp(ax1.get_xticklabels(), visible=True)
     # ax1.set_yticks([])
    
     for k in hits:
         for t in hits[k]:
-            ax1.plot([t[0], t[1]], [t[2], t[3]], color=colors[color_idx[k]], label=k)  
-    ax1.set_title(title)
-    # ax1.set_xlabel("")
-    ax1.set_ylabel(chrn)
+            ax1.plot([t[0], t[1]], [t[2]/1000000, t[3]/1000000], color=colors[color_idx[k]], label=k)  
+    # ax1.set_title(title)
+    ax1.set_xlabel("Contig (Mb)")
+    ax1.set_ylabel("{} (MB)".format(chrn))
     # zip legend
     handle, labels = ax1.get_legend_handles_labels()
     nhandles = []
@@ -61,8 +197,8 @@ def cgplot_func(hits, covs, chrg_t, qrybd):
             nlabels.append(l)
     ax1.legend(nhandles, nlabels, loc=1)
      
-    rect2 = [0.05, 0.02, 0.90, 0.25]
-    ax2 = fig.add_axes(rect2, sharex=ax1) 
+    rect2 = [0.07, 0.02, 0.90, 0.23]
+    ax2 = fig.add_axes(rect2 ) 
     ax2.set_ylim([ymin2, ymax2])
     ax2.invert_yaxis()
     ax2.set_xlim([xmin, xmax])
@@ -223,8 +359,9 @@ def get_select_coverage(wigfn, qrybd, c, n):
     return sel_wigd
 
 def worker(opts):
-    pafn = opts.paf_file
-    wigfn = opts.wig_file
+    pafn = (opts.paf_file)
+    wigfn =(opts.wig_file)
+    # print (wigfn)
     if not chk_fl(pafn) or not chk_fl(wigfn):
         print ("paf file or wig file is not found")
         return 1
@@ -238,6 +375,7 @@ def worker(opts):
     hitsd = get_select_hits(pafn, chrg_t, qnslst, opts.mmapl, qrybd) 
     cov_lim = [0]
     covs = get_select_coverage(wigfn, qrybd, cov_lim, 5)
+    # cgplot_func2(hitsd, covs, chrg_t, qrybd)
     update_coords(hitsd, covs, qrybd)
     
     cgplot_func(hitsd, covs, chrg_t, qrybd) 
