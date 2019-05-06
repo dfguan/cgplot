@@ -8,10 +8,10 @@ from wiggle import Reader
 def get_abspath(p):
     return os.path.abspath(p)
 
-def cgplot_func2(hits, covs, chrg_t, qrybd):
+def cgplot_func2(hits, covs, chrg_t, qrybd, fn, tit):
     [chrn, xmin, xmax] = chrg_t
-    title = "t1" 
-    title2 = "t2" 
+    title = tit 
+    # title2 = "t2" 
            
     height = 10
     width = 10
@@ -71,14 +71,15 @@ def cgplot_func2(hits, covs, chrg_t, qrybd):
     # plt.setp(ax1.get_xticklabels(), visible=True)
     # ax1.set_yticks([])
     start = xmin 
+    ttl = 0
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
-        start -= q[0]
+        start = ttl - q[0]
+        ttl += q[1] - q[0]
         for t in hits[k]:
             ax1.plot([t[2], t[3]], [start + t[0], start + t[1]], color=colors[color_idx[k]], label=k)  
-        start += q[1] - q[0]
     # ax1.set_title(title)
     ax1.set_xlabel("Contig (Mb)")
-    ax1.set_ylabel("{} (MB)".format(chrn))
+    ax1.set_ylabel("{} (Mb)".format(chrn))
     # zip legend
     handle, labels = ax1.get_legend_handles_labels()
     nhandles = []
@@ -87,7 +88,7 @@ def cgplot_func2(hits, covs, chrg_t, qrybd):
         if l not in nlabels:
             nhandles.append(h)
             nlabels.append(l)
-    ax1.legend(nhandles, nlabels, loc=1)
+    ax1.legend(nhandles, nlabels, loc=0)
      
     rect2 = [0.07, 0.02, 0.90, 0.23]
     ax2 = fig.add_axes(rect2 ) 
@@ -117,10 +118,11 @@ def cgplot_func2(hits, covs, chrg_t, qrybd):
     # ax2.legend(nhandles, nlabels, loc=1)
     # ax2.legend(loc=1)
     # fig.tight_layout()
-    fig.savefig("test.png", dpi = dpi)
-def cgplot_func(hits, covs, chrg_t, qrybd):
+    fig.savefig(fn, dpi = dpi)
+
+def cgplot_func(hits, covs, chrg_t, qrybd, fn, tit):
     [chrn, ymin, ymax] = chrg_t
-    title = "t1" 
+    title = tit 
     title2 = "t2" 
            
     height = 10
@@ -135,30 +137,37 @@ def cgplot_func(hits, covs, chrg_t, qrybd):
         color_idx[k] = t
         t += 1
 
-    maxcov = 0
+    totcov = 0
+    totlen = 0 
     for k in covs:
         for z in covs[k]:
-            if z[2] > maxcov:
-                maxcov = z[2]
-    
+            totcov += (z[1] - z[0] + 1) * z[2]
+            totlen += (z[1] - z[0] + 1)
+    avgcov = int ( totcov / totlen) 
     xmin = 0
     xmax = 0
     xlabel = []
     xpos = []
     start = 0
+    beg = True
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        start = xmax - q[0]
         xmax += q[1] - q[0] 
-        start -= q[0]
-        xpos.append(start + q[0])
-        xlabel.append("{0:.2f}".format(q[0]/1000000))
+        # print ("{0} {1} {2}".format(k, q[0], q[1]))
+        if not beg:
+            xlabel[-1] += " | {0:.2f}".format(q[0]/1000000) 
+        else:
+            xpos.append(start + q[0])
+            xlabel.append("{0:.2f}".format(q[0]/1000000))
+            beg = False
         xpos.append(start + int((q[0] + q[1])/2))
         xlabel.append("{}".format(k))
-        xpos.append(start + q[1] - 1000)
+        xpos.append(start + q[1] )
         xlabel.append("{0:.2f}".format(q[1]/1000000))
-        start += q[1] - q[0]
 
+    # print (xpos)
     ymin2 = 0 
-    ymax2 = int ((maxcov + 9) / 10 * 10) 
+    ymax2 = int (2.5 * avgcov) 
     
 
     fig = plt.figure(num=None, figsize=(width, height)) 
@@ -169,15 +178,15 @@ def cgplot_func(hits, covs, chrg_t, qrybd):
     ax1.set_xlim(xmin, xmax)
     ax1.set_xticks(xpos)
     ax1.set_xticklabels(xlabel, fontsize='xx-small')
-    ax1.tick_params(axis='x', direction='inout')
+    # ax1.tick_params(axis='x', direction='inout')
     # ax1.set_xticks(xpos[4:6])
     # ax1.set_xticklabels(xlabel[4:6], fontsize='xx-small')
     # ax1.tick_params(axis='x', direction='out')
-    i = 0
-    for txt in ax1.get_xticklabels():
-        if int(i / 3) % 2 == 1:
-            txt.set_y(0.04) 
-        i += 1
+    # i = 0
+    # for txt in ax1.get_xticklabels():
+        # if int(i / 3) % 2 == 1:
+            # txt.set_y(0.04) 
+        # i += 1
     # plt.setp(ax1.get_xticklabels(), visible=True)
     # ax1.set_yticks([])
    
@@ -195,7 +204,7 @@ def cgplot_func(hits, covs, chrg_t, qrybd):
         if l not in nlabels:
             nhandles.append(h)
             nlabels.append(l)
-    ax1.legend(nhandles, nlabels, loc=1)
+    ax1.legend(nhandles, nlabels, loc=0)
      
     rect2 = [0.07, 0.02, 0.90, 0.23]
     ax2 = fig.add_axes(rect2 ) 
@@ -220,19 +229,22 @@ def cgplot_func(hits, covs, chrg_t, qrybd):
     # ax2.legend(nhandles, nlabels, loc=1)
     # ax2.legend(loc=1)
     # fig.tight_layout()
-    fig.savefig("test.png", dpi = dpi)
+    fig.savefig(fn, dpi = dpi)
 
 def chk_fl(p):
     return os.path.isfile(p)
 
 def update_coords(hits, covs, qrybd):
     start = 0 
-    for t in qrybd.items():
-        print (t)
+    # for t in qrybd.items():
+        # print (t)
+    ttl = 0
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
         qe = q[1]
         qs = q[0]
-        start -= qs;
+        # print (q)
+        start = ttl - qs
+        ttl += qe - qs
         for i in range(len(hits[k])):
             
             hits[k][i][0] += start 
@@ -240,7 +252,6 @@ def update_coords(hits, covs, qrybd):
         for i in range(len(covs[k])):
             covs[k][i][0] += start
             covs[k][i][1] += start
-        start += qe - qs 
 def parse_chrg(chrg):
     chrglst = chrg.strip().split(':')
 
@@ -277,7 +288,7 @@ def get_select_hits(paf_fn, chrg_t, qnslist, ml, qrybd):
             _chrn  = hit[5]
             _st = int(hit[7])
             _ed = int(hit[8])
-            if qn in qnslist and  _chrn == chrn and _st >= st and _ed <= ed and qe - qs >= ml :
+            if qn in qnslist and  _chrn == chrn and _st < ed and _ed > st and qe - qs >= ml :
                 if hit[4] == '-': 
                     cnt[qn][1] += qe - qs 
                     # sel_hitsd[qn].append([qs, qe, _ed, _st])
@@ -297,7 +308,6 @@ def get_select_hits(paf_fn, chrg_t, qnslist, ml, qrybd):
             sel = '+'  
         elif cnt[qn][0] == cnt[qn][1]: 
            continue  
-
         for hit in hitsd[qn]:
             if sel == hit[2]:
                 if hit[2] == '-':
@@ -340,7 +350,7 @@ def get_select_coverage(wigfn, qrybd, c, n):
         length = 0
         tot = 0
         wigdl = len(wigd[k])
-        print (wigdl)
+        # print (wigdl)
         for i in range(wigdl + 1):
             # _st = wigd[k][i][0]
             if i == wigdl or i % n == 0:
@@ -373,12 +383,22 @@ def worker(opts):
     for qry in qnslst:
         qrybd[qry] = [10000000000, 0, 10000000000, 0]
     hitsd = get_select_hits(pafn, chrg_t, qnslst, opts.mmapl, qrybd) 
+    for k in hitsd:
+        if len(hitsd[k]) == 0:
+            print ("Error: a contig has no hits, please check query or chromsome name")
+            return 1
     cov_lim = [0]
+    # print (qrybd)
     covs = get_select_coverage(wigfn, qrybd, cov_lim, 5)
+    for k in covs:
+        if len(covs[k]) == 0:
+            print ("Error: a contig has no coverage")
+            return 1
+
     # cgplot_func2(hitsd, covs, chrg_t, qrybd)
     update_coords(hitsd, covs, qrybd)
     
-    cgplot_func(hitsd, covs, chrg_t, qrybd) 
+    cgplot_func(hitsd, covs, chrg_t, qrybd, opts.out, opts.title) 
     return 0 
 
 
@@ -391,6 +411,8 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--chrom', type=str, action="store", dest = "chrg", help ='chromsome region in chr:start-end or chr format', required=True)
     parser.add_argument('-q', '--query', type=str, action = "store", dest = "qns", help = 'query name(s) that fall(s) into the chromsome region, add comma to join multiple query names', required = True)
     parser.add_argument('-l', '--mmapl', type = int, action = "store", dest = "mmapl", help = 'minimum mapped length', default= 4000)
+    parser.add_argument('-o', '--out', type = str, action = "store", dest = "out", help = 'output file', default= "plot.png")
+    parser.add_argument('-t', '--title', type = str, action = "store", dest = "title", help = 'figure title')
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.0')
     parser.add_argument('paf_file', type=str, action="store", help = "a paf file")
     parser.add_argument('wig_file', type=str, action="store", help = "a wig file")
