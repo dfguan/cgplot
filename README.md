@@ -7,9 +7,7 @@ a script for viewing sequence aligments and read-depth
 ## Quick Start 
 
 ```
-python cgplot.py -c 3L:23000000-28000000 
--q000050F_arrow_arrow,000021F_arrow_arrow 
-tests/Anoph_coluzzii2chrom.paf tests/PB.cov.wig
+python cgplot.py -c 3L:23000000-28000000 -q000050F_arrow_arrow,000021F_arrow_arrow tests/Anoph_coluzzii2chrom.paf tests/PB.cov.wig
 ```
 This will generate a [plot.png](https://github.com/dfguan/cgplot/tree/master/tests/plot.png) file showing how the query contigs 50F and 21F are mapped to 23M-28M region of chromsome 3L, and also read depth plot are shown in the bottom. 
 
