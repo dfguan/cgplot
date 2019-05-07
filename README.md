@@ -1,5 +1,5 @@
 # cgplot
-viewer for sequence aligments + read-depth
+a script for viewing sequence aligments and read-depth
 
 ## Dependency
 1. python3 
