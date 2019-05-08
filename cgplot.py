@@ -195,7 +195,7 @@ def cgplot_func(hits, covs, chrg_t, qrybd, fn, tit):
             ax1.plot([t[0], t[1]], [t[2]/1000000, t[3]/1000000], color=colors[color_idx[k]], label=k)  
     # ax1.set_title(title)
     ax1.set_xlabel("Contig (Mb)")
-    ax1.set_ylabel("{} (MB)".format(chrn))
+    ax1.set_ylabel("{} (Mb)".format(chrn))
     # zip legend
     handle, labels = ax1.get_legend_handles_labels()
     nhandles = []
@@ -409,10 +409,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Genome Comparison plot')
 
     parser.add_argument('-c', '--chrom', type=str, action="store", dest = "chrg", help ='chromsome region in chr:start-end or chr format', required=True)
-    parser.add_argument('-q', '--query', type=str, action = "store", dest = "qns", help = 'query name(s) that fall(s) into the chromsome region, add comma to join multiple query names', required = True)
-    parser.add_argument('-l', '--mmapl', type = int, action = "store", dest = "mmapl", help = 'minimum mapped length', default= 4000)
-    parser.add_argument('-o', '--out', type = str, action = "store", dest = "out", help = 'output file', default= "plot.png")
-    parser.add_argument('-t', '--title', type = str, action = "store", dest = "title", help = 'figure title')
+    parser.add_argument('-q', '--query', type=str, action = "store", dest = "qns", help = 'query name(s) that fall(s) into the chromsome region, add comma to join multiple query names, support a maximum of 5 contigs', required = True)
+    parser.add_argument('-l', '--mmapl', type = int, action = "store", dest = "mmapl", help = 'minimum mapped length [4000]', default= 4000)
+    parser.add_argument('-o', '--out', type = str, action = "store", dest = "out", help = 'output file [plot.png]', default= "plot.png")
+    parser.add_argument('-t', '--title', type = str, action = "store", dest = "title", help = 'figure title [NULL]')
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.0')
     parser.add_argument('paf_file', type=str, action="store", help = "a paf file")
     parser.add_argument('wig_file', type=str, action="store", help = "a wig file")
