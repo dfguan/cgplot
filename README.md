@@ -21,7 +21,7 @@ Genome Comparison plot
 
 positional arguments:
   paf_file              a paf file
-  wig_file              a wig file
+  wig_file              a wig file, set window size 1024
 
 optional arguments:
   -h, --help            show this help message and exit

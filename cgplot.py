@@ -73,6 +73,8 @@ def cgplot_func2(hits, covs, chrg_t, qrybd, fn, tit):
     start = xmin 
     ttl = 0
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        if q[0] == 10000000000 and q[1] == 0:
+            continue
         start = ttl - q[0]
         ttl += q[1] - q[0]
         for t in hits[k]:
@@ -98,6 +100,8 @@ def cgplot_func2(hits, covs, chrg_t, qrybd, fn, tit):
     ax2.set_xticks([])
     # start = xmin
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        if q[0] == 10000000000 and q[1] == 0:
+            continue
         start = q[2]
         for t in covs[k]:
             # print (t)
@@ -120,7 +124,7 @@ def cgplot_func2(hits, covs, chrg_t, qrybd, fn, tit):
     # fig.tight_layout()
     fig.savefig(fn, dpi = dpi)
 
-def cgplot_func(hits, covs, chrg_t, qrybd, fn, tit):
+def cgplot_func(hits, covs, chrg_t, qrybd, fn, tit, dept):
     [chrn, ymin, ymax] = chrg_t
     title = tit 
     title2 = "t2" 
@@ -151,6 +155,8 @@ def cgplot_func(hits, covs, chrg_t, qrybd, fn, tit):
     start = 0
     beg = True
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        if q[0] == 10000000000 and q[1] == 0:
+            continue
         start = xmax - q[0]
         xmax += q[1] - q[0] 
         # print ("{0} {1} {2}".format(k, q[0], q[1]))
@@ -167,7 +173,7 @@ def cgplot_func(hits, covs, chrg_t, qrybd, fn, tit):
 
     # print (xpos)
     ymin2 = 0 
-    ymax2 = int (2.5 * avgcov) 
+    ymax2 = int (2.5 * avgcov) if dept == 0 else dept
     
 
     fig = plt.figure(num=None, figsize=(width, height)) 
@@ -240,6 +246,8 @@ def update_coords(hits, covs, qrybd):
         # print (t)
     ttl = 0
     for k, q in sorted(qrybd.items(), key=lambda x:(x[1][2] + x[1][3]) / 2): 
+        if q[0] == 10000000000 and q[1] == 0:
+            continue
         qe = q[1]
         qs = q[0]
         # print (q)
@@ -288,6 +296,7 @@ def get_select_hits(paf_fn, chrg_t, qnslist, ml, qrybd):
             _chrn  = hit[5]
             _st = int(hit[7])
             _ed = int(hit[8])
+
             if qn in qnslist and  _chrn == chrn and _st < ed and _ed > st and qe - qs >= ml :
                 if hit[4] == '-': 
                     cnt[qn][1] += qe - qs 
@@ -383,22 +392,27 @@ def worker(opts):
     for qry in qnslst:
         qrybd[qry] = [10000000000, 0, 10000000000, 0]
     hitsd = get_select_hits(pafn, chrg_t, qnslst, opts.mmapl, qrybd) 
+    empty_n = 0
     for k in hitsd:
         if len(hitsd[k]) == 0:
-            print ("Error: a contig has no hits, please check query or chromsome name")
-            return 1
+            print ("Warn: contig {} has no hits".format(k))
+            empty_n += 1
+    if empty_n == len(hitsd):
+        print ("Err: no contig has hits, please check query or chromsome name".format(k))
+        return 1
     cov_lim = [0]
     # print (qrybd)
+    # print (hitsd)
+
     covs = get_select_coverage(wigfn, qrybd, cov_lim, 5)
     for k in covs:
         if len(covs[k]) == 0:
-            print ("Error: a contig has no coverage")
-            return 1
+            print ("Warn: contig {} has no coverage".format(k))
 
     # cgplot_func2(hitsd, covs, chrg_t, qrybd)
     update_coords(hitsd, covs, qrybd)
     
-    cgplot_func(hitsd, covs, chrg_t, qrybd, opts.out, opts.title) 
+    cgplot_func(hitsd, covs, chrg_t, qrybd, opts.out, opts.title, opts.depthl) 
     return 0 
 
 
@@ -412,6 +426,7 @@ if __name__ == "__main__":
     parser.add_argument('-q', '--query', type=str, action = "store", dest = "qns", help = 'query name(s) that fall(s) into the chromsome region, add comma to join multiple query names, support a maximum of 5 contigs', required = True)
     parser.add_argument('-l', '--mmapl', type = int, action = "store", dest = "mmapl", help = 'minimum mapped length [4000]', default= 4000)
     parser.add_argument('-o', '--out', type = str, action = "store", dest = "out", help = 'output file [plot.png]', default= "plot.png")
+    parser.add_argument('-d', '--depth', type = int, action = "store", dest = "depthl", help = 'set a fixed read depth for the plot', default=0)
     parser.add_argument('-t', '--title', type = str, action = "store", dest = "title", help = 'figure title [NULL]')
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.0')
     parser.add_argument('paf_file', type=str, action="store", help = "a paf file")
